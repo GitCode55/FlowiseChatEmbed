@@ -18,6 +18,7 @@ type Props = {
   textColor?: string;
   chatFeedbackStatus?: boolean;
   fontSize?: number;
+  feedbackColor?: string;
 };
 
 const defaultBackgroundColor = '#f7f8ff';
@@ -36,7 +37,7 @@ export const BotBubble = (props: Props) => {
     try {
       const response = await sendFileDownloadQuery({
         apiHost: props.apiHost,
-        body: { question: '', history: [], fileName: fileAnnotation.fileName },
+        body: { question: '', fileName: fileAnnotation.fileName },
       });
       const blob = new Blob([response.data]);
       const downloadUrl = window.URL.createObjectURL(blob);
@@ -175,12 +176,17 @@ export const BotBubble = (props: Props) => {
       {props.chatFeedbackStatus && props.message.messageId && (
         <>
           <div class="flex items-center px-2">
-            <CopyToClipboardButton onClick={() => copyMessageToClipboard()} />
+            <CopyToClipboardButton feedbackColor={props.feedbackColor} onClick={() => copyMessageToClipboard()} />
             {rating() === '' || rating() === 'THUMBS_UP' ? (
-              <ThumbsUpButton isDisabled={rating() === 'THUMBS_UP'} rating={rating()} onClick={onThumbsUpClick} />
+              <ThumbsUpButton feedbackColor={props.feedbackColor} isDisabled={rating() === 'THUMBS_UP'} rating={rating()} onClick={onThumbsUpClick} />
             ) : null}
             {rating() === '' || rating() === 'THUMBS_DOWN' ? (
-              <ThumbsDownButton isDisabled={rating() === 'THUMBS_DOWN'} rating={rating()} onClick={onThumbsDownClick} />
+              <ThumbsDownButton
+                feedbackColor={props.feedbackColor}
+                isDisabled={rating() === 'THUMBS_DOWN'}
+                rating={rating()}
+                onClick={onThumbsDownClick}
+              />
             ) : null}
           </div>
           <Show when={showFeedbackContentDialog()}>
