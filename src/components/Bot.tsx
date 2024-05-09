@@ -419,6 +419,10 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         handleError(`Error: ${error?.message.replaceAll('Error:', ' ')}`);
         return;
       }
+      if (typeof error === 'string') {
+        handleError(error);
+        return;
+      }
       handleError();
       return;
     }
@@ -448,7 +452,13 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
   // Auto scroll chat to bottom
   createEffect(() => {
-    if (messages()) scrollToBottom();
+    if (messages()) {
+      if (messages().length > 1) {
+        setTimeout(() => {
+          chatContainer?.scrollTo(0, chatContainer.scrollHeight);
+        }, 400);
+      }
+    }
   });
 
   createEffect(() => {
@@ -896,6 +906,12 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                         message={message}
                         chatflowid={props.chatflowid}
                         chatId={chatId()}
+                        apiHost={props.apiHost}
+                        backgroundColor={props.botMessage?.backgroundColor}
+                        textColor={props.botMessage?.textColor}
+                        fontSize={props.fontSize}
+                        showAvatar={props.botMessage?.showAvatar}
+                        avatarSrc={props.botMessage?.avatarSrc}
                         leadsConfig={leadsConfig()}
                         sendButtonColor={props.textInput?.sendButtonColor}
                         isLeadSaved={isLeadSaved()}
