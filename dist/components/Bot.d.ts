@@ -1,4 +1,4 @@
-import { BotMessageTheme, TextInputTheme, UserMessageTheme, FeedbackTheme } from '@/features/bubble/types';
+import { BotMessageTheme, FooterTheme, TextInputTheme, UserMessageTheme, FeedbackTheme } from '@/features/bubble/types';
 export type FileEvent<T = EventTarget> = {
     target: T;
 };
@@ -24,6 +24,14 @@ type FilePreview = {
     type: string;
 };
 type messageType = 'apiMessage' | 'userMessage' | 'usermessagewaiting' | 'leadCaptureMessage';
+export type IAgentReasoning = {
+    agentName?: string;
+    messages?: string[];
+    usedTools?: any[];
+    sourceDocuments?: any[];
+    instructions?: string;
+    nextAgent?: string;
+};
 export type FileUpload = Omit<FilePreview, 'preview'>;
 export type MessageType = {
     messageId?: string;
@@ -32,6 +40,7 @@ export type MessageType = {
     sourceDocuments?: any;
     fileAnnotations?: any;
     fileUploads?: Partial<FileUpload>[];
+    agentReasoning?: IAgentReasoning[];
 };
 type observerConfigType = (accessor: string | boolean | object | MessageType[]) => void;
 export type observersConfigType = Record<'observeUserInput' | 'observeLoading' | 'observeMessages', observerConfigType>;
@@ -50,10 +59,12 @@ export type BotProps = {
     bubbleBackgroundColor?: string;
     bubbleTextColor?: string;
     showTitle?: boolean;
+    showAgentMessages?: boolean;
     title?: string;
     titleAvatarSrc?: string;
     fontSize?: number;
     isFullPage?: boolean;
+    footer?: FooterTheme;
     observersConfig?: observersConfigType;
 };
 export type LeadsConfig = {

@@ -7,7 +7,7 @@ import { BotBubble } from './bubbles/BotBubble';
 import { LoadingBubble } from './bubbles/LoadingBubble';
 import { SourceBubble } from './bubbles/SourceBubble';
 import { StarterPromptBubble } from './bubbles/StarterPromptBubble';
-import { BotMessageTheme, TextInputTheme, UserMessageTheme, FeedbackTheme } from '@/features/bubble/types';
+import { BotMessageTheme, FooterTheme, TextInputTheme, UserMessageTheme, FeedbackTheme } from '@/features/bubble/types';
 import { Badge } from './Badge';
 import socketIOClient from 'socket.io-client';
 import { Popup } from '@/features/popup';
@@ -51,6 +51,15 @@ type FilePreview = {
 
 type messageType = 'apiMessage' | 'userMessage' | 'usermessagewaiting' | 'leadCaptureMessage';
 
+export type IAgentReasoning = {
+  agentName?: string;
+  messages?: string[];
+  usedTools?: any[];
+  sourceDocuments?: any[];
+  instructions?: string;
+  nextAgent?: string;
+};
+
 export type FileUpload = Omit<FilePreview, 'preview'>;
 
 export type MessageType = {
@@ -60,6 +69,7 @@ export type MessageType = {
   sourceDocuments?: any;
   fileAnnotations?: any;
   fileUploads?: Partial<FileUpload>[];
+  agentReasoning?: IAgentReasoning[];
 };
 
 type observerConfigType = (accessor: string | boolean | object | MessageType[]) => void;
@@ -80,10 +90,12 @@ export type BotProps = {
   bubbleBackgroundColor?: string;
   bubbleTextColor?: string;
   showTitle?: boolean;
+  showAgentMessages?: boolean;
   title?: string;
   titleAvatarSrc?: string;
   fontSize?: number;
   isFullPage?: boolean;
+  footer?: FooterTheme;
   observersConfig?: observersConfigType;
 };
 
@@ -198,6 +210,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     ],
     { equals: false },
   );
+
   const [socketIOClientId, setSocketIOClientId] = createSignal('');
   const [isChatFlowAvailableToStream, setIsChatFlowAvailableToStream] = createSignal(false);
   const [chatId, setChatId] = createSignal(
@@ -261,15 +274,65 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   const addChatMessage = (allMessage: MessageType[]) => {
     setLocalStorageChatflow(props.chatflowid, chatId(), { chatHistory: allMessage });
   };
+  // Define the audioRef
+  let audioRef: HTMLAudioElement | undefined;
+  // CDN link for default receive sound
+  const defaultReceiveSound = 'https://cdn.jsdelivr.net/gh/FlowiseAI/FlowiseChatEmbed@latest/src/assets/receive_message.mp3';
+  const playReceiveSound = () => {
+    if (props.textInput?.receiveMessageSound) {
+      let audioSrc = defaultReceiveSound;
+      if (props.textInput?.receiveSoundLocation) {
+        audioSrc = props.textInput?.receiveSoundLocation;
+      }
+      audioRef = new Audio(audioSrc);
+      audioRef.play();
+    }
+  };
 
-  const updateLastMessage = (text: string, messageId: string, sourceDocuments: any = null, fileAnnotations: any = null) => {
+  const updateLastMessage = (
+    text: string,
+    messageId: string,
+    sourceDocuments: any = null,
+    fileAnnotations: any = null,
+    agentReasoning: IAgentReasoning[] = [],
+    resultText: string,
+  ) => {
     setMessages((data) => {
+      let uiUpdated = false;
+
       const updated = data.map((item, i) => {
         if (i === data.length - 1) {
-          return { ...item, message: item.message + text, messageId, sourceDocuments, fileAnnotations };
+          const previousText = item.message || '';
+          let newText = previousText + text;
+          // Set newText to resultText only if previousText is empty and resultText exists
+          if (!previousText && resultText) {
+            newText = resultText;
+          }
+          // Check if newText now matches resultText to track UI update
+          if (newText === resultText) {
+            uiUpdated = true;
+          }
+          return { ...item, message: newText, messageId, sourceDocuments, fileAnnotations, agentReasoning };
         }
         return item;
       });
+
+      // Add apiMessage if resultText exists and ui not updated
+      if (resultText && !uiUpdated) {
+        updated.push({
+          message: resultText,
+          type: 'apiMessage',
+          messageId,
+          sourceDocuments,
+          fileAnnotations,
+          agentReasoning,
+        });
+      }
+
+      if (resultText) {
+        playReceiveSound();
+      }
+
       addChatMessage(updated);
       return [...updated];
     });
@@ -279,7 +342,20 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     setMessages((data) => {
       const updated = data.map((item, i) => {
         if (i === data.length - 1) {
-          return { ...item, sourceDocuments: sourceDocuments };
+          return { ...item, sourceDocuments };
+        }
+        return item;
+      });
+      addChatMessage(updated);
+      return [...updated];
+    });
+  };
+
+  const updateLastMessageAgentReasoning = (agentReasoning: string | IAgentReasoning[]) => {
+    setMessages((data) => {
+      const updated = data.map((item, i) => {
+        if (i === data.length - 1) {
+          return { ...item, agentReasoning: typeof agentReasoning === 'string' ? JSON.parse(agentReasoning) : agentReasoning };
         }
         return item;
       });
@@ -404,9 +480,9 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         else if (data.json) text = JSON.stringify(data.json, null, 2);
         else text = JSON.stringify(data, null, 2);
 
-        updateLastMessage(text, data?.chatMessageId, data?.sourceDocuments, data?.fileAnnotations);
+        updateLastMessage(text, data?.chatMessageId, data?.sourceDocuments, data?.fileAnnotations, data?.agentReasoning, data.text);
       } else {
-        updateLastMessage('', data?.chatMessageId, data?.sourceDocuments, data?.fileAnnotations);
+        updateLastMessage('', data?.chatMessageId, data?.sourceDocuments, data?.fileAnnotations, data?.agentReasoning, data.text);
       }
       setLoading(false);
       setUserInput('');
@@ -486,6 +562,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
               if (message.sourceDocuments) chatHistory.sourceDocuments = message.sourceDocuments;
               if (message.fileAnnotations) chatHistory.fileAnnotations = message.fileAnnotations;
               if (message.fileUploads) chatHistory.fileUploads = message.fileUploads;
+              if (message.agentReasoning) chatHistory.agentReasoning = message.agentReasoning;
               return chatHistory;
             })
           : [{ message: props.welcomeMessage ?? defaultWelcomeMessage, type: 'apiMessage' }];
@@ -545,6 +622,8 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     });
 
     socket.on('sourceDocuments', updateLastMessageSourceDocuments);
+
+    socket.on('agentReasoning', updateLastMessageAgentReasoning);
 
     socket.on('token', updateLastMessage);
 
@@ -606,7 +685,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         data: base64data,
         preview: '../assets/wave-sound.jpg',
         type: 'audio',
-        name: 'audio.wav',
+        name: `audio_${Date.now()}.wav`,
         mime: mimeType,
       };
       setPreviews((prevPreviews) => [...prevPreviews, upload]);
@@ -795,7 +874,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
       };
     }),
   );
-
   return (
     <>
       <div
@@ -899,6 +977,8 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                         avatarSrc={props.botMessage?.avatarSrc}
                         chatFeedbackStatus={chatFeedbackStatus()}
                         fontSize={props.fontSize}
+                        isLoading={loading() && index() === messages().length - 1}
+                        showAgentMessages={props.showAgentMessages}
                       />
                     )}
                     {message.type === 'leadCaptureMessage' && leadsConfig()?.status && !getLocalStorageChatflow(props.chatflowid)?.lead && (
@@ -1047,6 +1127,9 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 textColor={props.textInput?.textColor}
                 placeholder={props.textInput?.placeholder}
                 sendButtonColor={props.textInput?.sendButtonColor}
+                maxChars={props.textInput?.maxChars}
+                maxCharsWarningMessage={props.textInput?.maxCharsWarningMessage}
+                autoFocus={props.textInput?.autoFocus}
                 fontSize={props.fontSize}
                 disabled={loading() || (leadsConfig()?.status && !isLeadSaved())}
                 defaultValue={userInput()}
@@ -1055,20 +1138,20 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 setPreviews={setPreviews}
                 onMicrophoneClicked={onMicrophoneClicked}
                 handleFileChange={handleFileChange}
+                sendMessageSound={props.textInput?.sendMessageSound}
+                sendSoundLocation={props.textInput?.sendSoundLocation}
               />
             )}
           </div>
-          <Badge badgeBackgroundColor={props.badgeBackgroundColor} poweredByTextColor={props.poweredByTextColor} botContainer={botContainer} />
+          <Badge
+            footer={props.footer}
+            badgeBackgroundColor={props.badgeBackgroundColor}
+            poweredByTextColor={props.poweredByTextColor}
+            botContainer={botContainer}
+          />
         </div>
       </div>
       {sourcePopupOpen() && <Popup isOpen={sourcePopupOpen()} value={sourcePopupSrc()} onClose={() => setSourcePopupOpen(false)} />}
     </>
   );
 };
-
-// type BottomSpacerProps = {
-//   ref: HTMLDivElement | undefined;
-// };
-// const BottomSpacer = (props: BottomSpacerProps) => {
-//   return <div ref={props.ref} class="w-full h-32" />;
-// };
