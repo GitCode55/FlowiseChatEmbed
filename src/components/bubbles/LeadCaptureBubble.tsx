@@ -29,9 +29,9 @@ const defaultFontSize = 16;
 const phoneRegex = new RegExp(/^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/);
 
 const LeadCaptureSchema = z.object({
-  name: z.string().min(2, 'Name is too short').optional(),
-  email: z.string().email('Please provide a valid email').optional(),
-  phone: z.string().min(5, 'Phone number is too short').regex(phoneRegex, 'Invalid Number!').optional(),
+  name: z.string().min(2, 'Nome muito curto').optional(),
+  email: z.string().email('Por favor, insira um email válido').optional(),
+  phone: z.string().min(5, 'Número de telefone muito curto').regex(phoneRegex, 'Número invalido!').optional(),
 });
 
 export const LeadCaptureBubble = (props: Props) => {
@@ -111,7 +111,7 @@ export const LeadCaptureBubble = (props: Props) => {
                   <div class={'w-full flex items-center justify-between chatbot-input border border-[#eeeeee]'}>
                     <input
                       class="focus:outline-none bg-transparent px-4 py-4 flex-1 w-full h-full min-h-[56px] max-h-[128px] text-input disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 "
-                      placeholder="Name"
+                      placeholder="Digite o seu nome"
                       name="name"
                       style={{ width: '100%' }}
                       value={leadName()}
@@ -127,7 +127,7 @@ export const LeadCaptureBubble = (props: Props) => {
                     <input
                       class="focus:outline-none bg-transparent px-4 py-4 flex-1 w-full h-full min-h-[56px] max-h-[128px] text-input disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 "
                       type="email"
-                      placeholder="Email Address"
+                      placeholder="Agora, o seu melhor e-mail:"
                       name="email"
                       style={{ width: '100%' }}
                       value={leadEmail()}
