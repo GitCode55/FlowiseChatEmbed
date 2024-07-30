@@ -162,7 +162,9 @@ textarea {
 
 .chatbot-container {
   background-image: var(--chatbot-container-bg-image);
-  background-color: var(--chatbot-container-bg-color);
+  background-color: #fff;
+  box-shadow: 0px 3px 20px #99999929;
+  border-radius: 24px; 
   font-family:
     'Open Sans',
     -apple-system,
