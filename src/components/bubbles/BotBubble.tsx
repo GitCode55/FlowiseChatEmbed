@@ -221,9 +221,9 @@ export const BotBubble = (props: Props) => {
               class="px-4 py-2 ml-2 max-w-full chatbot-host-bubble prose"
               data-testid="host-bubble"
               style={{
-                'background-color': props.backgroundColor ?? defaultBackgroundColor,
-                color: props.textColor ?? defaultTextColor,
-                'border-radius': '6px',
+                'background-color': #FAFAFA ?? defaultBackgroundColor,
+                color: #464646 ?? defaultTextColor,
+                'border-radius': '0px 10px 12px 12px',
                 'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
               }}
             />
