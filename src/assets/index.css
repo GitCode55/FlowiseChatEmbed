@@ -179,6 +179,21 @@ textarea {
     'Segoe UI Symbol';
 }
 
+/*Botão de enviar do form*/
+.sendform-button {
+  background: #00AE42;
+  border: none;
+  color: #fff;
+  height: 29px;
+  border-radius: 15px;
+}
+.sendform-button span{
+  font-size: 15px;
+  color: #fff;
+  text-align: left;
+  padding-right: 10px;
+}
+
 .file-annotation-button {
   color: var(--chatbot-button-color);
   background-color: #02a0a0c2;
