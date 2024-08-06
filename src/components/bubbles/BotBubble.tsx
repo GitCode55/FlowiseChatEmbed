@@ -157,14 +157,10 @@ export const BotBubble = (props: Props) => {
           const button = document.createElement('button');
           button.textContent = annotations.fileName;
           button.className =
-            'sendform-button py-2 px-4 mb-2 justify-center font-semibold text-white focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75 file-annotation-button';
+            'py-2 px-4 mb-2 justify-center font-semibold text-white focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75 file-annotation-button';
           button.addEventListener('click', function () {
             downloadFile(annotations);
           });
-          //texto 'Enviar'
-          const span = document.createElement('span');
-          span.textContent = 'Enviar';
-          button.appendChild(span);
           const svgContainer = document.createElement('div');
           svgContainer.className = 'ml-2';
           svgContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-download" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="#ffffff" fill="#fff" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>`;
